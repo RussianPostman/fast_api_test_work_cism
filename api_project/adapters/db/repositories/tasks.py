@@ -78,7 +78,7 @@ class TaskRepository(BaseRepository, TaskDatabaseInterface, ConsumerInterface):
                 qery = select(Task)
 
                 if status:
-                    qery = qery.where(Task.status == TaskStatusEnum.NEW)
+                    qery = qery.where(Task.status == status)
 
                 result = await session.execute(qery)
                 return [task.todict() for task in result.scalars().all()]

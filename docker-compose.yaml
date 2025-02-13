@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  postgres:
+    container_name: postgres
+    image: "postgres:15-alpine"
+    env_file:
+      - .env
+    restart: unless-stopped
+    expose:
+      - "5432"
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: $DATABASE_USER
+      POSTGRES_PASSWORD: $DATABASE_PASS
+      POSTGRES_DB: $DATABASE_NAME
+    volumes:
+      - "ppostgres.postgres.data:/var/lib/postgresql/data:rw"
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    expose:
+      - "5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: $RABBIT_USER
+      RABBITMQ_DEFAULT_PASS: $RABBIT_PASS
+    volumes:
+      - 'rabbitmq_data:/data'
+
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - 8004:8000
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - postgres
+
+  consumer_1:
+    container_name: consumer_1
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - postgres
+      - web
+      - rabbitmq
+
+volumes:
+  rabbitmq_data:
+  ppostgres.postgres.data: {}
+
+
